@@ -1,4 +1,5 @@
 #include "webrtc_output.hpp"
+#include <cstdlib>
 
 WebrtcOutput::WebrtcOutput(VideoOptions const *options)
 	: Output(options), net(), last_timestamp_us(0) {
@@ -11,6 +12,12 @@ WebrtcOutput::WebrtcOutput(VideoOptions const *options)
 
 	int connected = eyecam_net_wait_for_connection(net.state, options->webrtc.c_str());
 	LOG(1, "Connected!? " << connected);
+
+	// Just forcibly quit if connection fails for now.
+	if (!connected) {
+		LOG_ERROR("WebRTC connection failed. Shutting down.");
+		std::exit(51);
+	}
 }
 
 void WebrtcOutput::outputBuffer(void *mem, size_t size, int64_t timestamp_us, uint32_t flags) {
