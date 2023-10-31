@@ -2,6 +2,7 @@ libcamera_app_src += files([
     'circular_output.cpp',
     'file_output.cpp',
     'net_output.cpp',
+    'webrtc_output.cpp',
     'output.cpp',
 ])
 

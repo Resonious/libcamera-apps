@@ -56,6 +56,8 @@ struct VideoOptions : public Options
 			 "Break the recording into files of approximately this many milliseconds")
 			("circular", value<size_t>(&circular)->default_value(0)->implicit_value(4),
 			 "Write output to a circular buffer of the given size (in MB) which is saved on exit")
+			("webrtc", value<std::string>(&webrtc)->default_value("")->implicit_value("raw"),
+			 "Run in 'eye mode' with the given namespace")
 			("frames", value<unsigned int>(&frames)->default_value(0),
 			 "Run for the exact number of frames specified. This will override any timeout set.")
 #if LIBAV_PRESENT
@@ -119,6 +121,7 @@ struct VideoOptions : public Options
 	bool split;
 	uint32_t segment;
 	size_t circular;
+	std::string webrtc;
 	uint32_t frames;
 
 	virtual bool Parse(int argc, char *argv[]) override

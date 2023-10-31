@@ -32,6 +32,10 @@ endif
 
 libcamera_dep = dependency('libcamera', required : true)
 
+libeyecam_net_dep = declare_dependency(
+    link_args : ['-L../libs', '-leyecam_net']
+)
+
 summary({
             'location' : libcamera_dep.get_variable('libdir'),
             'version' : libcamera_dep.version()
@@ -39,7 +43,7 @@ summary({
         section : 'libcamera')
 
 libcamera_app_src = []
-libcamera_app_dep = [libcamera_dep]
+libcamera_app_dep = [libcamera_dep, libeyecam_net_dep]
 
 subdir('core')
 subdir('encoder')
