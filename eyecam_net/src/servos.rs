@@ -4,19 +4,42 @@ use rppal::pwm::{Channel, Polarity, Pwm};
 
 use std::f32::consts::PI;
 
-// From the SF006C Clutch Gear Digital Servo datasheet
+// Dead code allowed because right now I'm not switching these
+// at runtime.
+#[allow(dead_code)]
+enum ServoType {
+    SF006C,
+    SG90,
+}
 
-// SF006C
-// const PERIOD_MS: u64 = 10;
-// const PULSE_MIN_US: u64 = 500;
-// const PULSE_NEUTRAL_US: u64 = 1500;
-// const PULSE_MAX_US: u64 = 2500;
+struct ServoDef {
+    servo_type: ServoType,
+    period_ms: u64,
+    pulse_min_us: u64,
+    pulse_neutral_us: u64,
+    pulse_max_us: u64,
+}
 
-// SG90
-const PERIOD_MS: u64 = 20;
-const PULSE_MIN_US: u64 = 1000;
-const PULSE_NEUTRAL_US: u64 = 1500;
-const PULSE_MAX_US: u64 = 2000;
+impl ServoDef {
+    pub fn new(servo_type: ServoType) -> Self {
+        match servo_type {
+            ServoType::SF006C => Self {
+                servo_type,
+                period_ms: 10,
+                pulse_min_us: 500,
+                pulse_neutral_us: 1500,
+                pulse_max_us: 2500,
+            },
+            ServoType::SG90 => Self {
+                servo_type,
+                period_ms: 20,
+                pulse_min_us: 500,
+                pulse_neutral_us: 1500,
+                pulse_max_us: 2500,
+            },
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum Movement {
@@ -27,37 +50,42 @@ pub enum Movement {
 pub struct Servos {
     y_rotation: Pwm,
     x_rotation: Pwm,
+    servo: ServoDef,
 }
 
 impl Servos {
     pub fn new() -> Self {
+        // Manually change this line when changing physical servos
+        let servo = ServoDef::new(ServoType::SG90);
+
         Self {
             y_rotation: Pwm::with_period(
                 Channel::Pwm0,
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
+                Duration::from_millis(servo.period_ms),
+                Duration::from_micros(servo.pulse_neutral_us),
                 Polarity::Normal,
                 true,
             )
             .expect("Failed to init PWM0"),
             x_rotation: Pwm::with_period(
                 Channel::Pwm1,
-                Duration::from_millis(PERIOD_MS),
-                Duration::from_micros(PULSE_NEUTRAL_US),
+                Duration::from_millis(servo.period_ms),
+                Duration::from_micros(servo.pulse_neutral_us),
                 Polarity::Normal,
                 true,
             )
             .expect("Failed to init PWM1"),
+            servo,
         }
     }
 
-    fn rotate(pwm: &Pwm, radians: f32) {
-        let pulse = Self::radians_to_pulse(radians);
+    fn rotate(servo: &ServoDef, pwm: &Pwm, radians: f32) {
+        let pulse = Self::radians_to_pulse(servo, radians);
 
-        if pulse < PULSE_MIN_US {
+        if pulse < servo.pulse_min_us {
             panic!("pulse lower than expected {pulse}");
         }
-        if pulse > PULSE_MAX_US {
+        if pulse > servo.pulse_max_us {
             panic!("pulse higher than expected {pulse}");
         }
 
@@ -67,8 +95,8 @@ impl Servos {
             });
     }
 
-    fn radians_to_pulse(radians: f32) -> u64 {
-        let normalized_pulse_max = (PULSE_MAX_US - PULSE_MIN_US) as f32;
+    fn radians_to_pulse(servo: &ServoDef, radians: f32) -> u64 {
+        let normalized_pulse_max = (servo.pulse_max_us - servo.pulse_min_us) as f32;
         let normalized_radians_max = PI;
         let to_pulse = normalized_pulse_max / normalized_radians_max;
 
@@ -76,7 +104,7 @@ impl Servos {
         let normalized_radians = radians + PI / 2.0;
         let normalized_pulse = (normalized_radians * to_pulse) as u64;
         // 1500 is center, range from 500 to 2500 (see constants)
-        let pulse = normalized_pulse + PULSE_MIN_US;
+        let pulse = normalized_pulse + servo.pulse_min_us;
 
         return pulse;
     }
@@ -89,10 +117,19 @@ impl Servos {
     }
 
     pub fn set_rotation_x(self: &Self, radians: f32) {
-        Self::rotate(&self.x_rotation, -radians.clamp(-PI / 4.0, PI / 4.0));
+        let radians = match self.servo.servo_type {
+            ServoType::SF006C => -radians.clamp(-PI / 4.0, PI / 4.0),
+            ServoType::SG90 => -radians.clamp(-PI / 2.0, PI / 2.0),
+        };
+
+        Self::rotate(&self.servo, &self.x_rotation, radians);
     }
 
     pub fn set_rotation_y(self: &Self, radians: f32) {
-        Self::rotate(&self.y_rotation, radians.clamp(-PI / 2.0, PI / 2.0));
+        let radians = match self.servo.servo_type {
+            _ => -radians.clamp(-PI / 2.0, PI / 2.0),
+        };
+
+        Self::rotate(&self.servo, &self.y_rotation, radians);
     }
 }
