@@ -123,7 +123,9 @@ impl Connection {
 
         position_channel.on_close(Box::new(move || {
             tracing::warn!("Data channel closed");
-            Box::pin(async {})
+            // Just exit for now
+            std::process::exit(52);
+            // Box::pin(async {})
         }));
 
         // let d = position_channel.clone();

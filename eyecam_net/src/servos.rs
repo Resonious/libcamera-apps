@@ -127,7 +127,7 @@ impl Servos {
 
     pub fn set_rotation_y(self: &Self, radians: f32) {
         let radians = match self.servo.servo_type {
-            _ => -radians.clamp(-PI / 2.0, PI / 2.0),
+            _ => radians.clamp(-PI / 2.0, PI / 2.0),
         };
 
         Self::rotate(&self.servo, &self.y_rotation, radians);
