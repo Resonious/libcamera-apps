@@ -5,10 +5,18 @@ use rppal::pwm::{Channel, Polarity, Pwm};
 use std::f32::consts::PI;
 
 // From the SF006C Clutch Gear Digital Servo datasheet
-const PERIOD_MS: u64 = 10;
-const PULSE_MIN_US: u64 = 500;
+
+// SF006C
+// const PERIOD_MS: u64 = 10;
+// const PULSE_MIN_US: u64 = 500;
+// const PULSE_NEUTRAL_US: u64 = 1500;
+// const PULSE_MAX_US: u64 = 2500;
+
+// SG90
+const PERIOD_MS: u64 = 20;
+const PULSE_MIN_US: u64 = 1000;
 const PULSE_NEUTRAL_US: u64 = 1500;
-const PULSE_MAX_US: u64 = 2500;
+const PULSE_MAX_US: u64 = 2000;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Movement {
